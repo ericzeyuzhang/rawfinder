@@ -1,7 +1,11 @@
+import logging
 import os
 from pathlib import Path
 
 from rawfinder.exceptions import FinderDirectoryDoesNotExistError, FinderNoExtensionError
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class FileFinder:
@@ -19,4 +23,9 @@ class FileFinder:
         for entry in os.scandir(self.base_dir):
             if entry.is_file() and Path(entry).suffix.lower() in self.extensions:
                 files.append(Path(entry))
+            elif entry.is_dir() and not entry.name.endswith(".lrdata"):
+                logger.debug(f"Searching in subdirectory: {entry.path}")
+                # Recursively find files in subdirectories
+                subdir_files = FileFinder(Path(entry), self.extensions).find_files()
+                files.extend(subdir_files)
         return files
